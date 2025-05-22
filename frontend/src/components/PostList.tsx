@@ -1,41 +1,59 @@
-import PostCard from './PostCard'
+import { useEffect, useState } from "react";
+import PostCard from "./PostCard"
 
-{/* Dummyposts för exempel */ }
-const dummyPosts = [
-    {
-        title: 'Vad tycker ni om att gå i skolan?',
-        body: 'Jag har alltid älskat det, men vad tycker ni?',
-        community: 'skola',
-        username: 'Erikblabla',
-        upvotes: 12,
-        comments: 5,
-    },
-    {
-        title: 'Bästa pastareceptet?',
-        body: 'Har någon ett riktigt gott pastarecept att dela med sig av? 😋🫤',
-        community: 'mat',
-        username: 'kockproffset1337',
-        upvotes: 34,
-        comments: 9,
-    },
-]
+//Sätter standard för typdefinitionerna för ett inlägg
+interface Post {
+    id: number;
+    title: string;
+    content: string;
+    community_name: string
+    username: string;
+    upvotes: number;
+    comments: number;
+}
 
 const PostList = () => {
+    // State för att lisa över inlägg
+    const [posts, setPosts] = useState<Post[]>([])
+
+    //Körs vid sidladdning, hämtar inlägg från backend med fetch anrop igen
+    useEffect(() => {
+        const fetchPosts = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            const res = await fetch('http://localhost:8080/api/posts/foryou', {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setPosts(data);
+            } else {
+                console.error("Kunde inte hämta inlägg", data.message)
+            }
+        };
+
+        fetchPosts()
+    }, []);
+
     return (
         <>
-            {dummyPosts.map((post, index) => (
+            {posts.map((post) => (
                 <PostCard
-                    key={index}
+                    key={post.id}
                     title={post.title}
-                    body={post.body}
-                    community={post.community}
+                    body={post.content}
+                    community={post.community_name}
                     username={post.username}
-                    upvotes={post.upvotes}
-                    comments={post.comments}
+                    upvotes={post.upvotes ?? 0}
+                    comments={post.comments ?? 0}
                 />
             ))}
         </>
     )
 }
 
-export default PostList
+export default PostList;
