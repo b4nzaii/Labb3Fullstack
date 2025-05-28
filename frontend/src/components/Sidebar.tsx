@@ -1,16 +1,18 @@
 import { ListGroup, Button, Collapse, Card } from 'react-bootstrap'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+
 interface Community {
     id: number;
     name: string;
     description: string;
 }
+
 const Sidebar = () => {
     const [open, setOpen] = useState(true)
     const [communities, setCommunities] = useState<Community[]>([])
-    useEffect(() => {
 
+    useEffect(() => {
         const fetchCommunities = async () => {
             try {
                 const res = await fetch('http://localhost:8080/api/communities')
@@ -51,4 +53,5 @@ const Sidebar = () => {
         </Card>
     )
 }
+
 export default Sidebar

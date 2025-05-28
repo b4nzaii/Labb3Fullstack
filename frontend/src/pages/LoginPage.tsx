@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { Container, Form, Button, Alert, Card } from "react-bootstrap"
 
 const LoginPage = () => {
     const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const navigate = useNavigate();
 
     // handler för När användaren trycker på "Logga in"
     const handleLogin = async (e: React.FormEvent) => {
@@ -25,8 +24,8 @@ const LoginPage = () => {
         const data = await res.json();
 
         if (res.ok) {
-            localStorage.setItem("token", data.token);
-            navigate("/") // startsidan 
+            localStorage.setItem("token", data.token); // Sparar token i localStorage
+            window.location.href = '/'; // startsidan 
         } else {
             setError(data.message || "Inloggning misslyckades")
         }
@@ -37,7 +36,7 @@ const LoginPage = () => {
             <Card style={{ width: "100%", maxWidth: "500px" }} className="shadow-sm p-4">
                 <h3 className="mb-4 text-center">🔐 Logga in</h3>
 
-                {error ?? <Alert variant="danger">{error}</Alert>}
+                {error && <Alert variant="danger">{error}</Alert>}
 
                 <Form onSubmit={handleLogin}>
                     <Form.Group className="mb-3">
@@ -64,6 +63,9 @@ const LoginPage = () => {
                             Logga in
                         </Button>
                     </div>
+                    <Form.Text className="text-muted text-center d-block mt-3">
+                        Inget konto? <Link to="/register">Registrera dig</Link>
+                    </Form.Text>
                 </Form>
             </Card>
         </Container>

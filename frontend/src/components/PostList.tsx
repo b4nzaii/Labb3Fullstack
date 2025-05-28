@@ -1,59 +1,27 @@
-import { useEffect, useState } from "react";
-import PostCard from "./PostCard"
+import type { Post } from "../types/types";
+import PostCard from "./PostCard";
 
-//Sätter standard för typdefinitionerna för ett inlägg
-interface Post {
-    id: number;
-    title: string;
-    content: string;
-    community_name: string
-    username: string;
-    upvotes: number;
-    comments: number;
+interface PostListProps {
+    posts: Post[];
+    currentUserId?: number; // 
+    onDelete: (id: number) => void; // Callback för att ta bort inlägg
+    onPostCreated?: (newPost: Post) => void; // För att hantera skapade inlägg
 }
 
-const PostList = () => {
-    // State för att lisa över inlägg
-    const [posts, setPosts] = useState<Post[]>([])
 
-    //Körs vid sidladdning, hämtar inlägg från backend med fetch anrop igen
-    useEffect(() => {
-        const fetchPosts = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) return;
-
-            const res = await fetch('http://localhost:8080/api/posts/foryou', {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                setPosts(data);
-            } else {
-                console.error("Kunde inte hämta inlägg", data.message)
-            }
-        };
-
-        fetchPosts()
-    }, []);
-
+const PostList = ({ posts, currentUserId, onDelete }: PostListProps) => {
     return (
         <>
             {posts.map((post) => (
                 <PostCard
                     key={post.id}
-                    title={post.title}
-                    body={post.content}
-                    community={post.community_name}
-                    username={post.username}
-                    upvotes={post.upvotes ?? 0}
-                    comments={post.comments ?? 0}
+                    post={post}
+                    currentUserId={currentUserId}
+                    onDelete={onDelete}
                 />
             ))}
         </>
-    )
-}
+    );
+};
 
 export default PostList;

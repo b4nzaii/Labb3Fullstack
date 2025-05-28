@@ -1,0 +1,25 @@
+/* Standard ljus tema */
+body.dark-mode {
+    background-color: #191919;
+    color: White;
+}
+
+body.dark-mode .card {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+body.dark-mode .navbar {
+    background-color: #222;
+}
+
+body.dark-mode .form-control {
+    background-color: #3f3f3f;
+    color: white;
+    border-color: #444;
+}
+
+body.dark-mode .btn {
+    background-color: #444;
+    color: white;
+}

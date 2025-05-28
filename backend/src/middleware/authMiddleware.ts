@@ -14,7 +14,7 @@ export const authenticate: RequestHandler = (req, res, next) => {
         return;
     }
     try {
-        const token = authHeader.split("")[1]; // extrahera token
+        const token = authHeader.split(" ")[1]; // extrahera token
 
         const decoded = jwt.verify(token, JWT_SECRET) as { userId: number } // verifior
 

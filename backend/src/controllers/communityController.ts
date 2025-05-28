@@ -1,4 +1,5 @@
-import { Request, Response } from "express"
+import { Request, Response, RequestHandler } from "express";
+
 import db from "../models/db"
 
 // Nytt community
@@ -73,3 +74,22 @@ export const getUserCommunities = (req: Request, res: Response) => {
         res.status(500).json({ message: "Kunde inte hämta användarens communities" })
     }
 }
+// Hämta ett specifikt community med namn 
+export const getCommunityByName: RequestHandler = (req, res) => {
+    const { name } = req.params;
+
+    try {
+        const community = db
+            .prepare("SELECT * FROM communities WHERE LOWER(name) = LOWER(?)")
+            .get(name);
+
+        if (!community) {
+            res.status(404).json({ message: "Community hittades inte" });
+        }
+
+        res.status(200).json(community);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Kunde inte hämta community" });
+    }
+};

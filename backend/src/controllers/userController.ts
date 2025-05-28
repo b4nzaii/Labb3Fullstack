@@ -1,18 +1,18 @@
-import { Request, Response } from 'express';
+import { Request, Response, RequestHandler } from 'express';
 import db from '../models/db';
 import bcrypt from 'bcrypt';
 
-// Ändra profilbeskrivning, profilbild, dark mode
+// Uppdatera profilbeskrivning, bild och dark mode
 export const updateProfile = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const { profile_description, profile_picture, dark_mode } = req.body;
 
     try {
         const stmt = db.prepare(`
-      UPDATE users
-      SET profile_description = ?, profile_picture = ?, dark_mode = ?
-      WHERE id = ?
-    `);
+            UPDATE users
+            SET profile_description = ?, profile_picture = ?, dark_mode = ?
+            WHERE id = ?
+        `);
         stmt.run(profile_description, profile_picture, dark_mode ? 1 : 0, userId);
 
         res.status(200).json({ message: 'Profil uppdaterad' });
@@ -22,18 +22,16 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 };
 
-// Byta lösenord
+// Uppdatera lösenord
 export const updatePassword = async (req: Request, res: Response) => {
     const userId = (req as any).userId;
     const { currentPassword, newPassword } = req.body;
 
     try {
-        const user = db
-            .prepare('SELECT * FROM users WHERE id = ?')
-            .get(userId) as {
-                id: number;
-                password_hash: string;
-            };
+        const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as {
+            id: number;
+            password_hash: string;
+        };
 
         const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
         if (!isMatch) {
@@ -42,12 +40,34 @@ export const updatePassword = async (req: Request, res: Response) => {
         }
 
         const newHash = await bcrypt.hash(newPassword, 10);
-        db.prepare('UPDATE users SET password_hash = ? WHERE id = ?')
-            .run(newHash, userId);
+        db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, userId); // SQL för att uppdatera lösenordet och hashar det nya lösenordet
 
         res.status(200).json({ message: 'Lösenord uppdaterat!' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Kunde inte uppdatera lösenordet' });
+    }
+};
+
+// Hämta nuvarande användare
+export const getCurrentUser: RequestHandler = (req, res): void => {
+    const userId = (req as any).userId;
+
+    try {
+        const user = db.prepare(`
+            SELECT id, username, email, profile_description, profile_picture, dark_mode
+            FROM users
+            WHERE id = ?
+        `).get(userId);
+
+        if (!user) {
+            res.status(404).json({ message: 'Användare hittades inte' });
+            return;
+        }
+
+        res.status(200).json(user);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Kunde inte hämta användaren' });
     }
 };
