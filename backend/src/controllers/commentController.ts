@@ -1,30 +1,30 @@
-import { RequestHandler } from "express";
+import { Request, Response } from "express";
 import db from "../models/db";
 
-// Hämta alla kommentarer för ett visst inlägg
-export const getCommentsByPostId: RequestHandler = (req, res) => {
-    const { postId } = req.params;
+//  Hämta alla kommentarer
+export const getCommentsByPost = (req: Request, res: Response): void => {
+    const postId = req.params.postId;
 
     try {
-        const comments = db.prepare(
-            `SELECT comments.*, users.username 
-             FROM comments
-             JOIN users ON comments.user_id = users.id
-             WHERE comments.post_id = ?
-             ORDER BY comments.created_at ASC`
-        ).all(postId);
+        const comments = db.prepare(`
+            SELECT c.id, c.content, c.created_at, u.username
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.post_id = ?
+            ORDER BY c.created_at ASC
+        `).all(postId);
 
-        res.status(200).json(comments);
+        res.json(comments);
     } catch (err) {
-        console.error(err);
+        console.error("Fel vid hämtning av kommentarer", err);
         res.status(500).json({ message: "Kunde inte hämta kommentarer" });
     }
 };
 
-// Skapa en kommentar
-export const createComment: RequestHandler = (req, res): void => {
-    const { postId } = req.params;
+//  Skapa kommentar
+export const createComment = (req: Request, res: Response): void => {
     const userId = (req as any).userId;
+    const postId = req.params.postId;
     const { content } = req.body;
 
     if (!content) {
@@ -33,38 +33,40 @@ export const createComment: RequestHandler = (req, res): void => {
     }
 
     try {
-        const stmt = db.prepare(
-            `INSERT INTO comments (content, post_id, user_id)
-             VALUES (?, ?, ?)`
-        );
+        const stmt = db.prepare(`
+            INSERT INTO comments (content, post_id, user_id)
+            VALUES (?, ?, ?)
+        `);
         const result = stmt.run(content, postId, userId);
 
-        const newComment = db.prepare("SELECT * FROM comments WHERE id = ?").get(result.lastInsertRowid);
+        const newComment = db.prepare(`
+            SELECT c.id, c.content, c.created_at, u.username
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.id = ?
+        `).get(result.lastInsertRowid);
 
         res.status(201).json(newComment);
     } catch (err) {
-        console.error(err);
+        console.error("Fel vid skapande av kommentar", err);
         res.status(500).json({ message: "Kunde inte skapa kommentar" });
     }
-    return;
 };
 
-// Ta bort en kommentar (endast ägaren kan ta bort sin egen kommentar)
-export const deleteComment: RequestHandler = (req, res): void => {
-    const { commentId } = req.params;
+//  Radera kommentar
+export const deleteComment = (req: Request, res: Response): void => {
     const userId = (req as any).userId;
+    const commentId = req.params.commentId;
 
     try {
-        type Comment = { id: number; content: string; post_id: number; user_id: number; created_at: string };
-        const comment = db.prepare("SELECT * FROM comments WHERE id = ?").get(commentId) as Comment | undefined;
-
-        if (!comment) {
+        const existing = db.prepare("SELECT * FROM comments WHERE id = ?").get(commentId) as { user_id: number } | undefined;
+        if (!existing) {
             res.status(404).json({ message: "Kommentaren finns inte" });
             return;
         }
 
-        if (comment.user_id !== userId) {
-            res.status(403).json({ message: "Du får inte ta bort denna kommentar" });
+        if (existing.user_id !== userId) {
+            res.status(403).json({ message: "Du kan bara ta bort dina egna kommentarer" });
             return;
         }
 
@@ -72,7 +74,6 @@ export const deleteComment: RequestHandler = (req, res): void => {
         res.status(200).json({ message: "Kommentar raderad" });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: "Misslyckades att radera kommentaren" });
+        res.status(500).json({ message: "Kunde inte radera kommentar" });
     }
-    return;
 };

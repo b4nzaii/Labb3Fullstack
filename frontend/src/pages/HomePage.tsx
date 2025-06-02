@@ -18,9 +18,23 @@ const HomePage = () => {
             }
         };
 
-        const userId = localStorage.getItem("userId");
-        if (userId) setCurrentUserId(Number(userId));
+        const fetchCurrentUser = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
 
+            try {
+                const res = await fetch("http://localhost:8080/api/users/me", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    setCurrentUserId(data.id);
+                }
+            } catch (err) {
+                console.error("Kunde inte hämta användare", err);
+            }
+        };
+        fetchCurrentUser();
         fetchPosts();
     }, []);
 
@@ -30,11 +44,10 @@ const HomePage = () => {
 
     return (
         <div className="d-flex" style={{ minHeight: '100vh' }}>
-            <div className="bg-light border-end" style={{ width: '250px' }}>
-                <Sidebar />
+            <div className={`border-end px-2 ${document.body.classList.contains('dark-mode') ? 'bg-dark text-light' : 'bg-light'}`} style={{ width: '250px' }}>                <Sidebar />
             </div>
             <div className="flex-grow-1 p-4">
-                <h2>FYP</h2>
+                <h2 className="mb-4">FYP</h2>
                 <PostList
                     posts={posts}
                     currentUserId={currentUserId}

@@ -7,7 +7,7 @@ interface Community {
     description: string;
 }
 
-interface Post { // Post-types
+interface Post {
     id: number;
     title: string;
     content: string;
@@ -21,12 +21,12 @@ interface Props {
     onPostCreated?: (newPost: Post) => void;
 }
 
-const CreatePostPage = ({ onPostCreated }: Props) => { // Props för att skicka tillbaks det nya inlägget till parent komponenten
+const CreatePostPage = ({ onPostCreated }: Props) => { // Komponent för att skapa nytt inlägg med props 
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
-    const [link, setLink] = useState("");
     const [communityId, setCommunityId] = useState("");
     const [communities, setCommunities] = useState<Community[]>([]);
+    const [imageFile, setImageFile] = useState<File | null>(null);
     const [error, setError] = useState("");
 
     const navigate = useNavigate();
@@ -42,30 +42,39 @@ const CreatePostPage = ({ onPostCreated }: Props) => { // Props för att skicka 
         e.preventDefault();
         setError("");
 
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token"); // Hämtar token från localStorage..
         if (!token) {
             setError("Du måste vara inloggad för att skapa ett inlägg.");
             return;
         }
 
-        const res = await fetch("http://localhost:8080/api/posts/create", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ title, content, link, communityId }),
-        });
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("content", content);
+        formData.append("community_id", communityId);
+        if (imageFile) {
+            formData.append("preview_image", imageFile); // måste matcha multer
+        }
 
-        const data = await res.json();
+        try {
+            const res = await fetch("http://localhost:8080/api/posts/create", {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                body: formData,
+            });
 
-        if (res.ok) {
-            if (onPostCreated) {
-                onPostCreated(data); // lägg till i state direkt om parent vill
+            const data = await res.json();
+
+            if (res.ok) {
+                if (onPostCreated) onPostCreated(data);
+                navigate("/c/" + communityId);
+            } else {
+                setError(data.message || "Kunde inte skapa inlägget.");
             }
-            navigate("/c/" + communityId); // navigera till community
-        } else {
-            setError(data.message || "Kunde inte skapa inlägget.");
+        } catch (err) {
+            setError("Något gick fel.");
         }
     };
 
@@ -77,7 +86,7 @@ const CreatePostPage = ({ onPostCreated }: Props) => { // Props för att skicka 
 
                     {error && <div className="alert alert-danger">{error}</div>}
 
-                    <form onSubmit={handleSubmit}>
+                    <form onSubmit={handleSubmit} encType="multipart/form-data">
                         <div className="mb-3">
                             <label htmlFor="postTitle" className="form-label">Titel</label>
                             <input
@@ -102,14 +111,13 @@ const CreatePostPage = ({ onPostCreated }: Props) => { // Props för att skicka 
                         </div>
 
                         <div className="mb-3">
-                            <label htmlFor="postLink" className="form-label">Länk (valfritt)</label>
+                            <label htmlFor="postImage" className="form-label">Förhandsbild (valfritt)</label>
                             <input
-                                type="url"
+                                type="file"
                                 className="form-control"
-                                id="postLink"
-                                placeholder="https://..."
-                                value={link}
-                                onChange={(e) => setLink(e.target.value)}
+                                id="postImage"
+                                accept="image/*"
+                                onChange={(e) => setImageFile(e.target.files?.[0] || null)}
                             />
                         </div>
 

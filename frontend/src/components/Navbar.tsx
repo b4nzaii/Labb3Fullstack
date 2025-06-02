@@ -1,14 +1,14 @@
 import { Navbar, Nav, Container, Form, FormControl, Button, Image, Dropdown } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
-import profileImg from '../assets/profilbild.png';
 import { useEffect, useState } from 'react';
+import profileImg from '../assets/profilbild.png';
+import forosLogo from "../assets/Foros.png"
 
 const Navigation = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [profilePic, setProfilePic] = useState<string>(profileImg);
+    const [profilePic, setProfilePic] = useState<string>(profileImg); // default fallback
     const navigate = useNavigate();
 
-    // Kontrollera om token finns och sätt profilbild
     useEffect(() => {
         const checkTokenAndProfile = () => {
             const token = localStorage.getItem('token');
@@ -16,19 +16,20 @@ const Navigation = () => {
 
             const storedPic = localStorage.getItem("profile_picture");
             if (storedPic) {
-                setProfilePic(storedPic);
+                const fullUrl = storedPic.startsWith("http")
+                    ? storedPic
+                    : `http://localhost:8080${storedPic}`;
+                setProfilePic(fullUrl);
             } else {
-                setProfilePic(profileImg); // fallback
+                setProfilePic(profileImg);
             }
         };
 
-        checkTokenAndProfile();
-
-        window.addEventListener('storage', checkTokenAndProfile);
-        return () => window.removeEventListener('storage', checkTokenAndProfile);
+        checkTokenAndProfile(); // kör direkt
+        window.addEventListener('storage', checkTokenAndProfile); // vid ändringar
+        return () => window.removeEventListener('storage', checkTokenAndProfile); // clean-up
     }, []);
 
-    // Logga ut
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('profile_picture');
@@ -40,11 +41,21 @@ const Navigation = () => {
     return (
         <Navbar bg="dark" variant="dark" expand="lg" className="py-2 shadow-sm" sticky="top">
             <Container fluid className="px-4 d-flex justify-content-between align-items-center">
-                {/* Vänster */}
+
                 <div className="d-flex align-items-center">
-                    <Navbar.Brand as={Link} to="/" className="fw-bold me-4">
-                        Forum
+                    <Navbar.Brand as={Link} to="/" className="me-4 d-flex align-items-center">
+                        <img
+                            src={forosLogo}
+                            alt="Foros"
+                            style={{
+                                height: "39px",
+                                objectFit: "cover",
+                                borderRadius: "40%",
+                                width: "80px",
+                            }}
+                        />
                     </Navbar.Brand>
+
 
                     <Nav className="d-none d-lg-flex">
                         <Nav.Link as={Link} to="/">Hem</Nav.Link>
@@ -74,7 +85,15 @@ const Navigation = () => {
                                     src={profilePic}
                                     alt="Profil"
                                     roundedCircle
-                                    style={{ width: '38px', height: '40px', objectFit: 'cover' }}
+                                    style={{
+                                        width: '38px',
+                                        height: '38px',
+                                        objectFit: 'cover',
+                                        backgroundColor: 'transparent'
+                                    }}
+                                    onError={(e) => {
+                                        e.currentTarget.src = profileImg;
+                                    }}
                                 />
                             </Dropdown.Toggle>
 

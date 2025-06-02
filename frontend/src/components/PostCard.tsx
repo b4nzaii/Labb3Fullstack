@@ -1,5 +1,6 @@
 import { Card, Button, Badge, Row, Col } from "react-bootstrap";
 import type { Post } from "../types/types";
+import { Link } from "react-router-dom";
 
 interface Props {
     post: Post;
@@ -35,23 +36,32 @@ const PostCard = ({ post, currentUserId, onDelete }: Props) => {
     return (
         <Card className="mb-3 shadow-sm">
             <Card.Body>
-                <Card.Title>{post.title}</Card.Title>
+                <Card.Title>
+                    <Link
+                        to={`/posts/${post.id}`}
+                        className="title-link">
+                        {post.title}
+                    </Link>
+
+                </Card.Title>
+
                 <Card.Subtitle className="mb-2 text-muted">
-                    r/{post.community_name} • postat av {post.username}
+                    r/{post.community_name} • postat av{" "}
+                    <Link to={`/users/${post.username}`}>{post.username}</Link>
                 </Card.Subtitle>
 
                 {post.preview_image && (
                     <div className="mb-2">
                         <img
-                            src={post.preview_image}
-                            alt="preview"
+                            src={`http://localhost:8080${post.preview_image}`}
+                            alt={`Bild för ${post.title}`}
                             className="img-fluid rounded"
                             style={{ maxHeight: "200px", objectFit: "cover" }}
                         />
                     </div>
                 )}
 
-                <Card.Text>{post.content}</Card.Text>
+                {post.content && <Card.Text>{post.content}</Card.Text>}
 
                 <Row className="align-items-center mt-3">
                     <Col xs="auto">
@@ -63,7 +73,9 @@ const PostCard = ({ post, currentUserId, onDelete }: Props) => {
                         </Button>
                     </Col>
                     <Col>
-                        <Badge bg="secondary">{post.comments ?? 0} Kommentarer</Badge>
+                        <Badge bg="secondary">
+                            {post.comments ?? 0} Kommentarer
+                        </Badge>
                     </Col>
                 </Row>
 

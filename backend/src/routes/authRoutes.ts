@@ -13,7 +13,7 @@ const asyncHandler = (fn: Function) => (
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Använd asyncHandler runt varje controller-funktion
+// Använder asyncHandler runt varje controller-funktion
 router.post('/register', asyncHandler(registerUser));
 router.post('/login', asyncHandler(loginUser));
 

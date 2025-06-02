@@ -27,8 +27,7 @@ export const createCommunity = (req: Request, res: Response) => {
     }
 };
 
-// Lista alla communities här
-
+// Listar alla communities här
 export const getAllCommunities = (req: Request, res: Response) => {
     try {
         const communities = db.prepare("SELECT * FROM communities").all()

@@ -1,25 +1,208 @@
-/* Standard ljus tema */
+/* === Standardtema (ljus) === */
+body {
+    background: linear-gradient(135deg, #dceeff, #e3e4fb);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    background-size: cover;
+    font-family: Verdana, Geneva, Tahoma, sans-serif
+}
+
+.navbar,
+.card,
+.dropdown-menu {
+    background-color: #ffffff;
+    color: #212529;
+    border: 1px solid #dee2e6;
+}
+
+.form-control,
+.btn,
+.badge {
+    background-color: #ffffff;
+    color: #212529;
+    border: 1px solid #ced4da;
+}
+
+a {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* === Dark mode === */
 body.dark-mode {
-    background-color: #191919;
-    color: White;
+    background-color: #121212;
+    color: #f1f1f1;
 }
 
-body.dark-mode .card {
-    background-color: #1e1e1e;
-    color: white;
-}
-
+/* Navbar */
 body.dark-mode .navbar {
-    background-color: #222;
+    background-color: #1f1f1f;
+    border-bottom: 1px solid #333;
 }
 
+/* Cards */
+body.dark-mode .card,
+body.dark-mode .card-body {
+    background-color: #1e1e1e;
+    color: #f1f1f1;
+    border-color: #333;
+}
+
+/* Sidebar (vänsterkolumn) */
+body.dark-mode .list-group-item,
+body.dark-mode .bg-light,
+body.dark-mode .sidebar {
+    background-color: #1f1f1f !important;
+    color: #e0e0e0;
+    border-color: #333;
+}
+
+/* Inputs / Form */
 body.dark-mode .form-control {
-    background-color: #3f3f3f;
-    color: white;
-    border-color: #444;
+    background-color: #2c2c2c;
+    color: #ffffff;
+    border: 1px solid #444;
 }
 
+/* Buttons */
 body.dark-mode .btn {
     background-color: #444;
-    color: white;
+    color: #ffffff;
+    border: none;
+}
+
+body.dark-mode .btn:hover {
+    background-color: #1d1a1a;
+}
+
+/* Badges */
+body.dark-mode .badge {
+    background-color: #6a6969;
+    color: #fff;
+}
+
+/* Links */
+body.dark-mode a {
+    color: #90caf9;
+}
+
+body.dark-mode a:hover {
+    color: #bbdefb;
+    text-decoration: underline;
+}
+
+/* Text-muted fix */
+body.dark-mode .text-muted {
+    color: #c0c0c0 !important;
+}
+
+/* === TITEL-länkar === */
+.title-link {
+    color: #212529;
+    font-weight: bold;
+    font-size: 1.05rem;
+}
+
+.title-link:hover {
+    color: #0d6efd;
+    text-decoration: underline;
+}
+
+/* Dark mode override */
+body.dark-mode .title-link {
+    color: #ffffff;
+}
+
+body.dark-mode .title-link:hover {
+    color: #aad8ff;
+    text-decoration: underline;
+}
+
+/* Hover-effekt på kort (inlägg) */
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.3s ease;
+}
+
+body.dark-mode .card:hover {
+    background-color: #2a2a2a;
+}
+
+/* Upvote / Downvote-knappar */
+.vote-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 12px;
+}
+
+.vote-buttons button {
+    border: none;
+    background: transparent;
+    font-size: 1.2rem;
+    color: #999;
+    transition: color 0.2s ease;
+}
+
+.vote-buttons button:hover {
+    color: #ff4500;
+}
+
+/* Kommentar-räknare badge */
+.badge {
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+/* Kommentar-ruta */
+.comment-box {
+    background-color: rgb(229, 229, 229);
+    border: none;
+}
+
+body.dark-mode .comment-box {
+    background-color: #393737;
+    color: #f1f1f1;
+}
+
+
+/* === Global Auth Pages Styling === */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #a2cefa, #9bace9);
+}
+
+.auth-card {
+    background-color: #ffffff;
+    padding: 2.5rem;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 100%;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    color: #181f2a
+}
+
+
+.auth-card h3 {
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.auth-card .form-control {
+    border-radius: 10px;
+}
+
+.auth-card .btn-primary {
+    border-radius: 12px;
+    font-weight: 500;
 }

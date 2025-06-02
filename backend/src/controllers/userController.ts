@@ -3,24 +3,40 @@ import db from '../models/db';
 import bcrypt from 'bcrypt';
 
 // Uppdatera profilbeskrivning, bild och dark mode
-export const updateProfile = async (req: Request, res: Response) => {
+export const updateProfile = (req: Request, res: Response) => {
     const userId = (req as any).userId;
-    const { profile_description, profile_picture, dark_mode } = req.body;
+    const { profile_description, dark_mode } = req.body;
+    const file = req.file;
+
+    const profilePicturePath = file ? `/uploads/${file.filename}` : null; // Filväg för profilbilden
 
     try {
-        const stmt = db.prepare(`
-            UPDATE users
-            SET profile_description = ?, profile_picture = ?, dark_mode = ?
-            WHERE id = ?
+        let stmt;
+        if (profilePicturePath) {
+            stmt = db.prepare(` 
+          UPDATE users
+          SET profile_description = ?, profile_picture = ?, dark_mode = ?
+          WHERE id = ?
         `);
-        stmt.run(profile_description, profile_picture, dark_mode ? 1 : 0, userId);
+            stmt.run(profile_description, profilePicturePath, dark_mode === "true" ? 1 : 0, userId);
+        } else {
+            stmt = db.prepare(`
+          UPDATE users
+          SET profile_description = ?, dark_mode = ?
+          WHERE id = ?
+        `);
+            stmt.run(profile_description, dark_mode === "true" ? 1 : 0, userId);
+        }
 
-        res.status(200).json({ message: 'Profil uppdaterad' });
+        res.status(200).json({ message: "Profil uppdaterad" });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Kunde inte uppdatera profilen' });
+        console.error("Fel vid profiluppdatering:", err);
+        res.status(500).json({ message: "Kunde inte uppdatera profilen" });
     }
 };
+
+
+
 
 // Uppdatera lösenord
 export const updatePassword = async (req: Request, res: Response) => {
@@ -33,7 +49,7 @@ export const updatePassword = async (req: Request, res: Response) => {
             password_hash: string;
         };
 
-        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash); // Jämför nuvarande lösenord med det som finns i databasen
         if (!isMatch) {
             res.status(401).json({ message: 'Fel nuvarande lösenord' });
             return;
@@ -69,5 +85,36 @@ export const getCurrentUser: RequestHandler = (req, res): void => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Kunde inte hämta användaren' });
+    }
+};
+
+export const getUserByUsername = (req: Request, res: Response): void => {
+    const { username } = req.params;
+
+    try {
+        const user = db.prepare(`
+            SELECT id, username, profile_description, profile_picture, created_at
+            FROM users WHERE username = ?
+        `).get(username) as {
+            id: number;
+            username: string;
+            profile_description: string;
+            profile_picture: string;
+            created_at: string;
+        } | undefined;
+
+        if (!user) {
+            res.status(404).json({ message: "Användare hittades inte" });
+            return;
+        }
+
+        const posts = db.prepare(`
+            SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC
+        `).all(user.id);
+
+        res.json({ ...user, posts });
+    } catch (err) {
+        console.error("Fel vid hämtning av användare:", err);
+        res.status(500).json({ message: "Internt serverfel" });
     }
 };

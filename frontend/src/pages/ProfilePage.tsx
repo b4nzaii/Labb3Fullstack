@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import type { User } from "../types/types";
 
 const ProfilePage = () => {
-    const [user, setUser] = useState<User | null>(null);
-    const [description, setDescription] = useState("");
-    const [picture, setPicture] = useState("");
+    const [user, setUser] = useState<User | null>(null); // Användare som hämtas från API
+    const [description, setDescription] = useState(""); // Profilbeskrivning
+    const [image, setImage] = useState<File | null>(null); // Ny profilbild som användaren kan ladda upp sen
     const [darkMode, setDarkMode] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
@@ -12,27 +12,28 @@ const ProfilePage = () => {
     useEffect(() => {
         const fetchUser = async () => {
             const token = localStorage.getItem("token");
-            if (!token) {
-                console.error("Ingen token hittades");
-                return;
-            }
+            if (!token) return;
 
-            try {
-                const res = await fetch("http://localhost:8080/api/users/me", {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
+            const res = await fetch("http://localhost:8080/api/users/me", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-                const data = await res.json();
-                if (res.ok) {
-                    setUser(data);
-                    localStorage.setItem("profile_picture", data.profile_picture || ""); // Sparar profilbilden i localStorage
-                } else {
-                    console.error("Fel vid hämtning:", data.message);
+            const data = await res.json();
+            if (res.ok) { // Om Ok 
+                setUser(data);
+                setDescription(data.profile_description || "");
+                setDarkMode(data.dark_mode || false);
+
+                // Sätt profilbild och dark mode lokalt
+                if (data.profile_picture) {
+                    const fullUrl = `http://localhost:8080${data.profile_picture}`;
+                    localStorage.setItem("profile_picture", fullUrl);
                 }
-            } catch (err) {
-                console.error("Kunde inte ladda användarinformation.", err);
+
+                localStorage.setItem("dark_mode", data.dark_mode ? "true" : "false");
+                document.body.classList.toggle("dark-mode", data.dark_mode);
+            } else {
+                setError(data.message || "Kunde inte hämta användare.");
             }
         };
 
@@ -41,49 +42,59 @@ const ProfilePage = () => {
 
     const handleUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        const token = localStorage.getItem("token"); // Hämtar token från localStorage
+        const token = localStorage.getItem("token");
         if (!token) return;
+
+        const formData = new FormData(); // Skickar data till backend
+        formData.append("profile_description", description);
+        formData.append("dark_mode", String(darkMode));
+        if (image) formData.append("profile_picture", image);
 
         try {
             const res = await fetch("http://localhost:8080/api/users/update-profile", {
                 method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    profile_description: description,
-                    profile_picture: picture,
-                    dark_mode: darkMode,
-                }),
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData,
             });
 
+            const data = await res.json();
             if (res.ok) {
                 setMessage("Profilen uppdaterades!");
+
+                // Uppdaterar darkmoder direkt
+                localStorage.setItem("dark_mode", darkMode ? "true" : "false");
+                document.body.classList.toggle("dark-mode", darkMode);
+
+                // Uppdaterar profilbild i localStorage + trigga Navbar
+                if (data.profile_picture) {
+                    const fullUrl = `http://localhost:8080${data.profile_picture}`;
+                    localStorage.setItem("profile_picture", fullUrl);
+                    window.dispatchEvent(new Event("storage"));
+                }
+
+                window.location.reload();
             } else {
-                const data = await res.json();
-                setError(data.message || "Något gick fel.");
+                setError(data.message || "Uppdatering misslyckades.");
             }
         } catch (err) {
             console.error(err);
-            setError("Kunde inte uppdatera profilen.");
+            setError("Nätverksfel vid uppdatering.");
         }
     };
 
-    if (error) return <p className="text-danger">{error}</p>;
     if (!user) return <p>Laddar...</p>;
 
     return (
         <div className="container mt-4">
             <h2>Min profil</h2>
-
             {message && <p className="text-success">{message}</p>}
+            {error && <p className="text-danger">{error}</p>}
 
             <div className="card mt-3">
                 <div className="card-body">
                     {user.profile_picture && (
                         <img
-                            src={user.profile_picture}
+                            src={`http://localhost:8080${user.profile_picture}`}
                             alt="Profilbild"
                             className="img-thumbnail mb-3"
                             style={{ maxWidth: "150px" }}
@@ -91,12 +102,8 @@ const ProfilePage = () => {
                     )}
                     <h5 className="card-title">{user.username}</h5>
                     <p className="card-text">📧 {user.email}</p>
-                    {user.profile_description && (
-                        <p className="card-text">📝 {user.profile_description}</p>
-                    )}
-                    <p className="card-text">
-                        🌙 Dark mode: {user.dark_mode ? "På" : "Av"}
-                    </p>
+                    <p className="card-text">📝 {user.profile_description}</p>
+                    <p className="card-text">🌙 Dark mode: {user.dark_mode ? "På" : "Av"}</p>
                 </div>
             </div>
 
@@ -107,31 +114,31 @@ const ProfilePage = () => {
                         className="form-control"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        rows={3}
                     />
                 </div>
 
                 <div className="mb-3">
-                    <label className="form-label">Profilbild (URL)</label>
+                    <label className="form-label">Ny profilbild</label>
                     <input
+                        type="file"
+                        accept="image/*"
                         className="form-control"
-                        type="text"
-                        value={picture}
-                        onChange={(e) => setPicture(e.target.value)}
+                        onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) setImage(file);
+                        }}
                     />
                 </div>
 
                 <div className="form-check mb-3">
                     <input
-                        className="form-check-input"
                         type="checkbox"
+                        className="form-check-input"
                         id="darkMode"
                         checked={darkMode}
                         onChange={(e) => setDarkMode(e.target.checked)}
                     />
-                    <label className="form-check-label" htmlFor="darkMode">
-                        Aktivera dark mode
-                    </label>
+                    <label htmlFor="darkMode" className="form-check-label">Dark mode</label>
                 </div>
 
                 <button className="btn btn-primary" type="submit">
