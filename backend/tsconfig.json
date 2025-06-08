@@ -10,12 +10,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "types": [
-      "node",
-      "express",
-      "bcrypt",
-      "jsonwebtoken",
-      "multer",
-      "cors"
+      "node"
     ]
   },
   "include": [
