@@ -9,8 +9,9 @@ interface Props {
 }
 
 const PostCard = ({ post, currentUserId, onDelete }: Props) => {
+    const token = localStorage.getItem("token");
+
     const handleDelete = async () => {
-        const token = localStorage.getItem("token");
         if (!token) return;
 
         try {
@@ -33,16 +34,41 @@ const PostCard = ({ post, currentUserId, onDelete }: Props) => {
         }
     };
 
+    const handleUpvote = async () => {
+        if (!token) return;
+
+        try {
+            await fetch(`http://localhost:8080/api/posts/${post.id}/upvote`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            window.location.reload(); // enkel reload för att se uppdatering
+        } catch (err) {
+            console.error("Misslyckades att upp-rösta", err);
+        }
+    };
+
+    const handleDownvote = async () => {
+        if (!token) return;
+
+        try {
+            await fetch(`http://localhost:8080/api/posts/${post.id}/downvote`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            window.location.reload();
+        } catch (err) {
+            console.error("Misslyckades att ner-rösta", err);
+        }
+    };
+
     return (
         <Card className="mb-3 shadow-sm">
             <Card.Body>
                 <Card.Title>
-                    <Link
-                        to={`/posts/${post.id}`}
-                        className="title-link">
+                    <Link to={`/posts/${post.id}`} className="title-link">
                         {post.title}
                     </Link>
-
                 </Card.Title>
 
                 <Card.Subtitle className="mb-2 text-muted">
@@ -65,10 +91,19 @@ const PostCard = ({ post, currentUserId, onDelete }: Props) => {
 
                 <Row className="align-items-center mt-3">
                     <Col xs="auto">
-                        <Button size="sm" variant="outline-success" className="me-1">
+                        <Button
+                            size="sm"
+                            variant="outline-success"
+                            className="me-1"
+                            onClick={handleUpvote}
+                        >
                             ▲ {post.upvotes ?? 0}
                         </Button>
-                        <Button size="sm" variant="outline-danger">
+                        <Button
+                            size="sm"
+                            variant="outline-danger"
+                            onClick={handleDownvote}
+                        >
                             ▼
                         </Button>
                     </Col>

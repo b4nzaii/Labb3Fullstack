@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes';
 import postRoutes from "./routes/postRoutes";
 import communityRoutes from "./routes/communityRoutes"
 import commentRoutes from "./routes/commentRoutes";
+import friendRoutes from './routes/friendRoutes';
 import path from "path";
 dotenv.config();
 // Users
@@ -93,6 +94,20 @@ db.exec(`
   FOREIGN KEY (friend_id) REFERENCES users(id)
 );
   `)
+// tabell för friend requests
+db.exec(`
+  CREATE TABLE IF NOT EXISTS friend_requests(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(sender_id) REFERENCES users(id),
+    FOREIGN KEY(receiver_id) REFERENCES users(id)
+  );
+`);
+
+
 
 const postCols = db.prepare("PRAGMA table_info(posts);").all();
 const hasPreviewImage = postCols.some((col: any) => col.name === "preview_image");
@@ -110,7 +125,7 @@ app.use("/api/posts", postRoutes)
 app.use("/api/communities", communityRoutes)
 app.use("/api/comments", commentRoutes)
 app.use('/uploads', express.static('uploads'));
-
+app.use('/api/friends', friendRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servern körs på port ${PORT}`);

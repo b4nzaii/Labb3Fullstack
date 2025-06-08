@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import type { User } from "../types/types";
 
+interface Friend {
+    id: number;
+    username: string;
+    profile_picture?: string;
+}
+
 const ProfilePage = () => {
-    const [user, setUser] = useState<User | null>(null); // Användare som hämtas från API
-    const [description, setDescription] = useState(""); // Profilbeskrivning
-    const [image, setImage] = useState<File | null>(null); // Ny profilbild som användaren kan ladda upp sen
+    const [user, setUser] = useState<User | null>(null);
+    const [description, setDescription] = useState("");
+    const [image, setImage] = useState<File | null>(null);
     const [darkMode, setDarkMode] = useState(false);
+    const [friends, setFriends] = useState<Friend[]>([]);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
@@ -15,16 +22,15 @@ const ProfilePage = () => {
             if (!token) return;
 
             const res = await fetch("http://localhost:8080/api/users/me", {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
 
             const data = await res.json();
-            if (res.ok) { // Om Ok 
+            if (res.ok) {
                 setUser(data);
                 setDescription(data.profile_description || "");
                 setDarkMode(data.dark_mode || false);
 
-                // Sätt profilbild och dark mode lokalt
                 if (data.profile_picture) {
                     const fullUrl = `http://localhost:8080${data.profile_picture}`;
                     localStorage.setItem("profile_picture", fullUrl);
@@ -37,7 +43,20 @@ const ProfilePage = () => {
             }
         };
 
+        const fetchFriends = async () => {
+            const token = localStorage.getItem("token");
+            if (!token) return;
+
+            const res = await fetch("http://localhost:8080/api/friends/list", {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            const data = await res.json();
+            if (res.ok) setFriends(data);
+        };
+
         fetchUser();
+        fetchFriends();
     }, []);
 
     const handleUpdate = async (e: React.FormEvent) => {
@@ -45,7 +64,7 @@ const ProfilePage = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
-        const formData = new FormData(); // Skickar data till backend
+        const formData = new FormData();
         formData.append("profile_description", description);
         formData.append("dark_mode", String(darkMode));
         if (image) formData.append("profile_picture", image);
@@ -60,12 +79,9 @@ const ProfilePage = () => {
             const data = await res.json();
             if (res.ok) {
                 setMessage("Profilen uppdaterades!");
-
-                // Uppdaterar darkmoder direkt
                 localStorage.setItem("dark_mode", darkMode ? "true" : "false");
                 document.body.classList.toggle("dark-mode", darkMode);
 
-                // Uppdaterar profilbild i localStorage + trigga Navbar
                 if (data.profile_picture) {
                     const fullUrl = `http://localhost:8080${data.profile_picture}`;
                     localStorage.setItem("profile_picture", fullUrl);
@@ -138,13 +154,32 @@ const ProfilePage = () => {
                         checked={darkMode}
                         onChange={(e) => setDarkMode(e.target.checked)}
                     />
-                    <label htmlFor="darkMode" className="form-check-label">Dark mode</label>
+                    <label htmlFor="darkMode" className="form-check-label">
+                        Dark mode
+                    </label>
                 </div>
 
                 <button className="btn btn-primary" type="submit">
                     Uppdatera profil
                 </button>
             </form>
+
+            <h4 className="mt-5">Vänner ({friends.length})</h4>
+            <ul className="list-group">
+                {friends.map((f) => (
+                    <li key={f.id} className="list-group-item d-flex align-items-center">
+                        {f.profile_picture && (
+                            <img
+                                src={`http://localhost:8080${f.profile_picture}`}
+                                alt="Profil"
+                                className="rounded-circle me-2"
+                                style={{ width: "40px", height: "40px", objectFit: "cover" }}
+                            />
+                        )}
+                        {f.username}
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 };

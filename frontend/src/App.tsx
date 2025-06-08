@@ -11,6 +11,7 @@ import ProfilePage from "./pages/ProfilePage";
 import PostPage from "./pages/PostPage";
 import LandingPage from "./pages/LandingPage";
 import UserProfilePage from './pages/UserProfilePage';
+import FriendRequests from './pages/friendRequests';
 const AppWrapper = () => {
 
   const location = useLocation();
@@ -43,6 +44,7 @@ const AppWrapper = () => {
         <Route path="/posts/:id" element={<PostPage />} />
         <Route path="/users/:username" element={<UserProfilePage />} />
         <Route path="/create-post" element={<CreatePostPage />} />
+        <Route path="/friend-requests" element={<FriendRequests />} />
       </Routes>
     </>
   );
